@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.routes.analytics import router as analytics_router
 from app.api.routes.employees import router as employees_router
 from app.db.models import Base
 from app.db.session import engine
@@ -15,3 +16,4 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="Salary Management API", lifespan=lifespan)
 app.include_router(employees_router, prefix="/api")
+app.include_router(analytics_router, prefix="/api")

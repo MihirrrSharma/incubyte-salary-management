@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import re
 
 from sqlalchemy.orm import Session
@@ -36,10 +36,11 @@ def currency_minor_unit_exponent(currency: str) -> int:
         ) from error
 
 
-def format_salary_amount(salary_minor_units: int, currency: str) -> str:
+def format_salary_amount(salary_minor_units: int | Decimal, currency: str) -> str:
     exponent = currency_minor_unit_exponent(currency)
     amount = Decimal(salary_minor_units).scaleb(-exponent)
-    return f"{amount:.{exponent}f}"
+    quantum = Decimal(1).scaleb(-exponent)
+    return f"{amount.quantize(quantum, rounding=ROUND_HALF_UP):.{exponent}f}"
 
 
 def salary_amount_to_minor_units(salary_amount: str, currency: str) -> int:
