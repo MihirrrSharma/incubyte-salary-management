@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
 
 
 class EmployeeRead(BaseModel):
@@ -27,3 +27,9 @@ class EmployeePage(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class SalaryUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    salary_amount: StrictStr

@@ -4,11 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db
-from app.schemas.employees import EmployeePage
+from app.schemas.employees import EmployeePage, EmployeeRead, SalaryUpdateRequest
 from app.services.employees import (
+    SalaryValidationError,
     UnsupportedCurrencyError,
     currency_minor_unit_exponent,
     list_employees,
+    update_employee_salary,
 )
 
 
@@ -50,3 +52,23 @@ def get_employees(
         )
     except UnsupportedCurrencyError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.patch("/employees/{employee_id}/salary", response_model=EmployeeRead)
+def patch_employee_salary(
+    employee_id: str,
+    request: SalaryUpdateRequest,
+    session: Session = Depends(get_db),
+) -> EmployeeRead:
+    try:
+        employee = update_employee_salary(
+            session,
+            employee_id=employee_id,
+            salary_amount=request.salary_amount,
+        )
+    except (SalaryValidationError, UnsupportedCurrencyError) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+    if employee is None:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return employee
