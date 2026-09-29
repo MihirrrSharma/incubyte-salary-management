@@ -19,7 +19,11 @@
         "npm --prefix frontend ci",
         "npm --prefix frontend run build"
       ],
-      "deployOutputs": ["frontend/dist"]
+      "deployOutputs": [
+        {
+          "include": ["dist"]
+        }
+      ]
     }
   },
   "deploy": {
