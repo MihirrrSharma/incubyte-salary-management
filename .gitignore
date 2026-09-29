@@ -7,6 +7,7 @@ __pycache__/
 # Environment
 .env
 .env.*
+!.env.example
 
 # Frontend
 node_modules/
@@ -19,3 +20,5 @@ dist/
 .vscode/
 .idea/
 .DS_Store
+
+*.tsbuildinfo

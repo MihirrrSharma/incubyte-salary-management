@@ -91,5 +91,43 @@ AI tools assisted throughout development with design exploration, test generatio
 
 ## Deployment
 
+### Local Production Mode
+
+Build the frontend from the repository root:
+
+```powershell
+npm --prefix frontend ci
+npm --prefix frontend run build
+```
+
+With the Python environment activated, initialize an empty database and start FastAPI:
+
+```powershell
+python -m backend.app.db.seed --if-empty
+python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000
+```
+
+When `frontend/dist` exists, FastAPI serves its assets, the React entry point, and SPA paths from the same origin as `/api`. `/docs` remains FastAPI Swagger UI.
+
+### Railway
+
+For a new Railway service, configure the following Build Command in the service settings. Do not rely on `railway.toml`; Railway's current documentation says new services cannot opt into Config-as-Code.
+
+```sh
+npm --prefix frontend ci && npm --prefix frontend run build
+```
+
+Configure this Start Command in the Railway service settings:
+
+```sh
+sh -c 'python -m backend.app.db.seed --if-empty && exec python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port ${PORT:-8000}'
+```
+
+Attach a persistent Railway volume to the service and set its mount path to `/data`. Railway supplies `RAILWAY_VOLUME_MOUNT_PATH` automatically. `DATABASE_URL` is optional: if unset, the application stores `salary_management.db` under that supplied mount path. To configure it explicitly, set `DATABASE_URL=sqlite:////data/salary_management.db`.
+
+The seed runs conditionally at startup because Railway volumes are unavailable during pre-deploy. It initializes an empty employee table and preserves an initialized database on later starts. The SQLite file is generated on the mounted volume and is not committed to the repository; `*.db` is ignored. `.env.example` documents the optional local override and contains no secrets.
+
+Python is pinned to 3.12 by `.python-version`; Railpack obtains Node.js 22 from `railpack.json`. The root `requirements.txt` shim installs `backend/requirements.txt`. Locally, when no Railway mount or `DATABASE_URL` is configured, the app continues to use `sqlite:///./salary_management.db` relative to the process working directory.
+
 Deployment URL: TBD
 Demo video: TBD

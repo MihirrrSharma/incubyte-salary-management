@@ -10,6 +10,7 @@ from app.db.seed import (
     FIXED_SEED_TIMESTAMP,
     generate_employees,
     seed_employees,
+    seed_if_empty,
 )
 from app.services.employees import CURRENCY_MINOR_UNIT_EXPONENTS
 
@@ -82,3 +83,34 @@ def test_running_seed_twice_does_not_create_duplicates(test_session_factory):
 
     assert first_count == second_count == 45
     assert len(employee_ids) == len(set(employee_ids)) == 45
+
+
+def test_seed_if_empty_initializes_a_fresh_database(test_session_factory):
+    with test_session_factory() as session:
+        employee_count = seed_if_empty(session, count=7)
+        stored_count = session.scalar(select(func.count()).select_from(Employee))
+
+    assert employee_count == stored_count == 7
+
+
+def test_seed_if_empty_preserves_an_initialized_database(test_session_factory):
+    with test_session_factory() as session:
+        session.add(
+            Employee(
+                employee_id="CUSTOM001",
+                name="Existing employee",
+                country="US",
+                department="Engineering",
+                salary_minor_units=123456,
+                currency="USD",
+                updated_at=FIXED_SEED_TIMESTAMP,
+            )
+        )
+        session.commit()
+
+        employee_count = seed_if_empty(session, count=7)
+        existing = session.get(Employee, "CUSTOM001")
+        stored_count = session.scalar(select(func.count()).select_from(Employee))
+
+    assert employee_count == stored_count == 1
+    assert existing.salary_minor_units == 123456

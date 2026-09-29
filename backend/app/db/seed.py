@@ -89,9 +89,26 @@ def seed_employees(
     return int(session.scalar(select(func.count()).select_from(Employee)) or 0)
 
 
+def seed_if_empty(
+    session: Session,
+    count: int = DEFAULT_EMPLOYEE_COUNT,
+) -> int:
+    existing_count = int(
+        session.scalar(select(func.count()).select_from(Employee)) or 0
+    )
+    if existing_count:
+        return existing_count
+    return seed_employees(session, count)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Seed synthetic salary-management employees")
     parser.add_argument("--count", type=int, default=DEFAULT_EMPLOYEE_COUNT)
+    parser.add_argument(
+        "--if-empty",
+        action="store_true",
+        help="seed only if the employee table contains no rows",
+    )
     arguments = parser.parse_args()
 
     if arguments.count < 0:
@@ -99,7 +116,10 @@ def main() -> None:
 
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as session:
-        employee_count = seed_employees(session, arguments.count)
+        if arguments.if_empty:
+            employee_count = seed_if_empty(session, arguments.count)
+        else:
+            employee_count = seed_employees(session, arguments.count)
     print(f"Employee count: {employee_count}")
 
 

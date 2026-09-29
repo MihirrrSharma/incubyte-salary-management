@@ -200,9 +200,9 @@ Make seeding idempotent: a second run must not duplicate employees. Use a transa
 
 ## 14. Deployment Approach
 
-Deploy one FastAPI application and one React static build. Vite emits the frontend assets; deployment can serve them from a static host or through the same-origin web server/reverse proxy that forwards `/api` to FastAPI. Prefer same-origin routing to avoid unnecessary CORS configuration. Keep the frontend REST base URL configurable at build/deployment time.
+Deploy one FastAPI application that serves the Vite production build from the same origin as its `/api` routes. Serve static assets directly and return the frontend entry point for non-API SPA paths; keep FastAPI's OpenAPI routes available. This avoids cross-origin configuration and requires the frontend bundle to be present in `frontend/dist` at startup.
 
-Run FastAPI as a single application service with a persistent mounted volume for the SQLite file. Run the seed command as an explicit deployment/setup step before serving traffic, and preserve the database volume across restarts and releases. Provide a documented local setup, test, seed, and run sequence; a small container image may package the backend and static assets if useful, but orchestration infrastructure is not required. Back up the SQLite file using a consistent SQLite-aware backup method. Because SQLite is a single-instance choice, use a server database later only if concurrent write volume or multi-instance availability requirements exceed this application's expected use.
+On Railway, mount a persistent volume at `/data`. When `DATABASE_URL` is unset, configure the application to store SQLite at `$RAILWAY_VOLUME_MOUNT_PATH/salary_management.db`; local development continues to default to `./salary_management.db`. Initialize a fresh database at service startup only when its employee table is empty, using the deterministic seed command. Railway volumes are not available during pre-deploy commands, so this check belongs in the application start command. Preserve the volume across releases and use an SQLite-aware backup method. SQLite remains a single-instance choice; consider a server database only if write concurrency or multi-instance availability requirements outgrow this deployment shape.
 
 ## 15. Trade-offs and Rejected Alternatives
 
