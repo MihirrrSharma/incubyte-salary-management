@@ -7,8 +7,7 @@
     "frontend-build": {
       "inputs": [
         {
-          "step": "packages:mise",
-          "include": ["/mise/shims", "/mise/installs"]
+          "step": "packages:mise"
         },
         {
           "local": true,
@@ -21,7 +20,7 @@
       ],
       "deployOutputs": [
         {
-          "include": ["dist"]
+          "include": ["frontend/dist"]
         }
       ]
     }
